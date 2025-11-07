@@ -1,0 +1,25 @@
+# treefmt.toml
+# Unified formatter configuration for Nix flakes
+
+[formatter.nix]
+command = "nixfmt-rfc-style"
+includes = ["*.nix"]
+
+[formatter.shell]
+command = "shfmt"
+options = ["-i", "2", "-ci"]
+includes = ["*.sh"]
+
+[formatter.markdown]
+command = "prettier"
+options = ["--prose-wrap", "always"]
+includes = ["*.md"]
+
+[formatter.yaml]
+command = "yamlfmt"
+includes = ["*.yml", "*.yaml"]
+
+[formatter.json]
+command = "jq"
+options = ["."] # Pretty print JSON
+includes = ["*.json"]
