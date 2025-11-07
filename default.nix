@@ -4,7 +4,10 @@ pkgs.stdenv.mkDerivation rec {
   pname = "rovium";
   version = "1.0.0";
 
-  src = ./rovium-0.4.0-amd64.deb;
+  src = pkgs.fetchurl {
+    url = "https://github.com/MaximilianCF/rovium-ide-nix/releases/download/v${version}/rovium-0.4.0-amd64.deb";
+    sha256 = "0000000000000000000000000000000000000000000000000000";
+  };
 
   nativeBuildInputs = with pkgs; [
     autoPatchelfHook

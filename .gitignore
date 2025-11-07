@@ -1,0 +1,9 @@
+# Nix
+result
+result-*
+
+# Downloaded files
+*.deb
+
+# Build artifacts
+.direnv/
