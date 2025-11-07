@@ -9,18 +9,19 @@
 
 ## 📦 Overview
 
-**Rovium** is a modern IDE designed for robotics development, providing native support for **ROS** and **ROS2** environments.  
-It is built upon **Electron** and **Eclipse Theia**, offering an extensible and cross-platform interface for robotic projects.
+**Rovium** is a modern IDE for robotics development with **ROS** and **ROS2**.  
+It is built with **Electron** and **Eclipse Theia**, providing an extensible, cross-platform interface for robotics projects.
 
 This repository provides a **Nix flake** that repackages the official `.deb` release of Rovium for **NixOS**.
 
-> ⚠️ **Note:** Rovium is proprietary software. This package only provides the Nix expression for reproducible installation — no source code is included or redistributed.
+> ⚠️ **Note:** Rovium is proprietary software.  
+> This repository only provides the Nix expression and does not redistribute the binary.
 
 ---
 
 ## 🚀 Usage
 
-### Clone and run
+Clone and run directly:
 
 ```bash
 git clone https://github.com/MaximilianCF/rovium-ide-nix.git
@@ -41,10 +42,10 @@ nix build
 
 The flake repackages the official `.deb` release using Nix’s `stdenv.mkDerivation`.
 
-1. Extracts the `.deb` package using `dpkg-deb`
-2. Patches ELF binaries automatically via `autoPatchelfHook`
-3. Wraps the main binary with `makeWrapper` to fix environment paths
-4. Copies the upstream `.desktop` file and icon for integration
+1. Extracts the `.deb` using `dpkg-deb`
+2. Automatically patches ELF binaries via `autoPatchelfHook`
+3. Wraps the executable with correct library paths
+4. Installs the `.desktop` entry and icon for integration
 
 ---
 
@@ -54,22 +55,22 @@ The flake repackages the official `.deb` release using Nix’s `stdenv.mkDerivat
 Handled automatically through `buildInputs`:
 - GTK3 / ATK / Cairo / Pango
 - X11 stack (libX11, libXrandr, libxcb, etc.)
-- Electron dependencies (NSS, NSPR, libsecret)
-- Audio and system (ALSA, dbus, systemd)
+- Electron runtime (NSS, NSPR, libsecret)
+- Audio (ALSA) and system libraries (dbus, systemd)
 - Rendering (mesa, libdrm, libGL)
 - Fonts (fontconfig)
 
 ### Build Tools
-- `autoPatchelfHook` – adjusts runtime library paths
-- `makeWrapper` – wraps the Rovium binary with proper env vars
-- `dpkg` – extracts `.deb` archive contents
+- `autoPatchelfHook` – fixes ELF runtime paths  
+- `makeWrapper` – wraps the Rovium binary  
+- `dpkg` – extracts `.deb` archives  
 
 ---
 
 ## 🪄 Running Options
 
 Rovium runs under both X11 and Wayland.  
-In some environments, GPU flags may need adjustment.
+In some systems, GPU flags may require tweaking:
 
 ```bash
 # Force software rendering
@@ -81,28 +82,27 @@ nix run . -- --enable-features=UseOzonePlatform --ozone-platform=wayland
 
 ---
 
-## ⚠️ Known Warnings (Safe to Ignore)
+## 🧹 Formatting
 
-- `Fontconfig warning: using without calling FcInit()`  
-  → benign; can be silenced by ensuring `fontconfig` is in `buildInputs`.
+The project uses [`treefmt-nix`](https://github.com/numtide/treefmt-nix) with `nixfmt-rfc-style` and other formatters.
 
-- `Failed to load plugin localization bundles...`  
-  → upstream plugin missing translation folders; harmless.
+Run:
+```bash
+nix fmt
+```
 
-- `Cannot save data: no opened workspace`  
-  → normal until a project is opened.
+Configuration lives in [`treefmt.toml`](./treefmt.toml).
 
 ---
 
 ## 🧩 License
 
-- **Rovium** itself is proprietary software — [terms on the official website](https://rovium.dev).  
-- The **Nix packaging code** in this repository is licensed under **MIT**.
+- **Rovium** itself is proprietary software — see [rovium.dev](https://rovium.dev).  
+- The **Nix packaging code** is licensed under MIT.
 
 ```text
 This repository does NOT distribute Rovium binaries.
-It only provides a reproducible build recipe that downloads
-the original `.deb` package from Rovium's official release page.
+It only provides a reproducible build recipe for NixOS users.
 ```
 
 ---
@@ -124,6 +124,7 @@ the original `.deb` package from Rovium's official release page.
 - [ROS / ROS2](https://www.ros.org/)
 - [NixOS](https://nixos.org/)
 - [Eclipse Theia](https://theia-ide.org/)
+- [treefmt-nix](https://github.com/numtide/treefmt-nix)
 
 ---
 
