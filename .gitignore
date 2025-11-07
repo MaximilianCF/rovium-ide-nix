@@ -4,6 +4,7 @@ result-*
 
 # Downloaded files
 *.deb
+*.log
 
 # Build artifacts
 .direnv/
