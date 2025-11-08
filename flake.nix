@@ -15,7 +15,8 @@
       treefmt-nix,
       ...
     }:
-    flake-utils.lib.eachDefaultSystem (system:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -29,6 +30,12 @@
             email = "maximiliancf.dev@icloud.com";
             github = "MaximilianCF";
           };
+        };
+
+        # 🧹 treefmt configuration
+        treefmtEval = treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
         };
 
         # 🧰 Main package: Rovium IDE
@@ -121,20 +128,35 @@
             sourceProvenance = with sourceTypes; [ binaryNativeCode ];
           };
         };
-      in {
-        # 📦 Default package & app entries
-        packages.default = rovium;
+      in
+      {
+        # 📦 Expose both 'rovium' and 'default' packages
+        packages = {
+          rovium = rovium;
+          default = rovium;
+        };
 
-        apps.default = {
-          type = "app";
-          program = "${rovium}/bin/rovium";
-          meta = {
-            description = "Launch Rovium IDE";
-            mainProgram = "rovium";
+        # 🚀 App entries for easy running
+        apps = {
+          rovium = {
+            type = "app";
+            program = "${rovium}/bin/rovium";
+            meta.description = "Launch Rovium IDE";
+          };
+          default = {
+            type = "app";
+            program = "${rovium}/bin/rovium";
+            meta.description = "Launch Rovium IDE (default app)";
           };
         };
 
         # 🧹 Formatter (treefmt-nix)
-        formatter = treefmt-nix.lib.mkWrapper pkgs { };
-      });
+        formatter = treefmtEval.config.build.wrapper;
+
+        # ✅ Checks for CI
+        checks = {
+          formatting = treefmtEval.config.build.check self;
+        };
+      }
+    );
 }

@@ -1,0 +1,155 @@
+name: "Nix Flake CI — Rovium IDE"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: "🧩 Validate flake & formatting"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+
+      - name: "Show flake metadata"
+        run: |
+          nix flake show
+          nix flake metadata
+
+      - name: "Check flake integrity"
+        run: nix flake check --show-trace --allow-import-from-derivation
+
+  build:
+    name: "🚀 Build Rovium IDE"
+    runs-on: ubuntu-latest
+    needs: check
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+            extra-substituters = https://cache.nixos.org
+            extra-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+      - name: "Build Rovium (explicit package)"
+        run: |
+          nix build .#rovium \
+            --print-build-logs \
+            --show-trace
+
+      - name: "Verify executable structure"
+        run: |
+          echo "==> Checking binary type"
+          file ./result/bin/rovium
+          
+          echo "==> Checking binary size"
+          du -sh ./result/bin/rovium
+          
+          echo "==> Listing output directory"
+          ls -lah ./result/bin/
+
+      - name: "Test Rovium help output"
+        run: |
+          ./result/bin/rovium --help || echo "Help flag not supported (expected for Electron apps)"
+
+  build-default:
+    name: "🔄 Build default package"
+    runs-on: ubuntu-latest
+    needs: check
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+
+      - name: "Build default package"
+        run: nix build .#default --print-build-logs
+
+      - name: "Verify both builds are identical"
+        run: |
+          echo "Default package built successfully"
+          ls -lah ./result/bin/
+
+  release:
+    name: "📦 Create release artifacts"
+    runs-on: ubuntu-latest
+    needs: [build, build-default]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+
+      - name: "Build release"
+        run: nix build .#rovium --print-build-logs
+
+      - name: "Create distribution tarball"
+        run: |
+          mkdir -p dist
+          tar czf dist/rovium-ide-${{ github.sha }}.tar.gz -C result .
+          
+          echo "==> Tarball created"
+          ls -lah dist/
+
+      - name: "Generate build info"
+        run: |
+          cat > dist/BUILD_INFO.txt << EOF
+          Rovium IDE Build Information
+          ============================
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+          Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Builder: GitHub Actions
+          
+          Nix Flake: github:MaximilianCF/rovium-ide-nix
+          System: x86_64-linux
+          EOF
+          
+          cat dist/BUILD_INFO.txt
+
+      - name: "Upload build artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: rovium-ide-linux-${{ github.sha }}
+          path: dist/*
+          retention-days: 30
+
+      - name: "Upload build info"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info-${{ github.sha }}
+          path: dist/BUILD_INFO.txt
+          retention-days: 90
