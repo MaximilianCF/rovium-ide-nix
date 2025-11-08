@@ -1,0 +1,80 @@
+name: "Nix Flake CI — Rovium IDE"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: "🧩 Validate flake & formatting"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+
+      - name: "Show flake info"
+        run: nix flake info
+
+      - name: "Check flake integrity"
+        run: nix flake check --show-trace
+
+      - name: "Run formatter"
+        run: nix fmt
+
+  build:
+    name: "🚀 Build Rovium IDE"
+    runs-on: ubuntu-latest
+    needs: check
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            allow-import-from-derivation = true
+            allow-unfree = true
+
+      - name: "Build Rovium"
+        run: nix build .#rovium
+
+      - name: "Verify executable"
+        run: file ./result/bin/rovium
+
+  release:
+    name: "📦 Upload build artifacts"
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Install Nix"
+        uses: cachix/install-nix-action@v27
+
+      - name: "Build release"
+        run: nix build .#rovium
+
+      - name: "Upload result as artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: rovium-ide-linux
+          path: ./result

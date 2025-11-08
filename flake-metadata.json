@@ -1,0 +1,62 @@
+{
+  "name": "rovium-ide-nix",
+  "description": "Rovium IDE — Electron + Theia environment for robotics and ROS development",
+  "homepage": "https://rovium.dev",
+  "repository": "https://github.com/MaximilianCF/rovium-ide-nix",
+  "license": "unfreeRedistributable",
+  "version": "0.4.0-beta",
+  "maintainers": [
+    {
+      "name": "Maximilian Canez Fernandes",
+      "email": "maximiliancf.dev@icloud.com",
+      "github": "MaximilianCF"
+    }
+  ],
+  "flake": true,
+  "systems": ["x86_64-linux"],
+  "build": {
+    "inputs": [
+      "autoPatchelfHook",
+      "makeWrapper",
+      "dpkg",
+      "gtk3",
+      "mesa",
+      "libGL",
+      "dbus",
+      "fontconfig"
+    ],
+    "toolchain": "nixpkgs/nixos-unstable",
+    "type": "stdenv.mkDerivation"
+  },
+  "binaries": [
+    {
+      "name": "rovium",
+      "path": "bin/rovium",
+      "main": true
+    }
+  ],
+  "flags": [
+    "--no-sandbox",
+    "--ozone-platform=x11",
+    "--disable-update",
+    "--disable-component-update",
+    "--disable-breakpad",
+    "--enable-features=UseOzonePlatform"
+  ],
+  "tags": [
+    "Electron",
+    "Theia",
+    "IDE",
+    "ROS",
+    "Robotics",
+    "NixOS",
+    "Flake"
+  ],
+  "nixCompatibility": {
+    "flake": ">=2.4",
+    "nixpkgs": ">=23.11"
+  },
+  "buildStatus": {
+    "x86_64-linux": "passing"
+  }
+}

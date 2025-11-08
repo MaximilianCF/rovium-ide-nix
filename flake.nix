@@ -21,8 +21,6 @@
           inherit system;
           config.allowUnfree = true;
         };
-        # 🧹 Modern formatter (treefmt-nix)
-        formatter = treefmt-nix.lib.mkWrapper pkgs { };
 
         # 🧩 Maintainer info (nixpkgs style)
         maintainers = {
@@ -38,12 +36,10 @@
           pname = "rovium";
           version = "0.4.0-beta";
 
-          src = ./rovium-0.4.0-amd64.deb;
-
-          # src = pkgs.fetchurl {
-          # url = "https://github.com/MaximilianCF/rovium-ide-nix/releases/download/v0.1.0-beta/rovium-0.4.0-amd64.deb";
-          # sha256 = "0lar58in784sjc3rnlqafm2bbh9vbl8jrwqwc46g9jhjcgrl6w94";
-          # };
+          src = pkgs.fetchurl {
+            url = "https://github.com/MaximilianCF/rovium-ide-nix/releases/download/v0.1.0-beta/rovium-0.4.0-amd64.deb";
+            sha256 = "0lar58in784sjc3rnlqafm2bbh9vbl8jrwqwc46g9jhjcgrl6w94";
+          };
 
           nativeBuildInputs = with pkgs; [
             autoPatchelfHook
@@ -97,8 +93,10 @@
             # 🧩 Wrapper with graphical environment vars
             makeWrapper $out/opt/Rovium/rovium $out/bin/rovium \
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath buildInputs}" \
-              --set LIBGL_ALWAYS_SOFTWARE 0 \
-              --add-flags "--enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox"
+              --set ELECTRON_ENABLE_LOGGING 0 \
+              --set ELECTRON_NO_UPDATER 1 \
+              --set DBUS_SESSION_BUS_ADDRESS "unix:path=/run/user/\\$(id -u)/bus" \
+              --add-flags "--no-sandbox --ozone-platform=x11 --disable-update --disable-component-update --disable-breakpad --disable-background-networking --enable-features=UseOzonePlatform"
 
             # Copy .desktop and icon from the .deb structure
             if [ -f usr/share/applications/rovium.desktop ]; then
@@ -137,6 +135,6 @@
         };
 
         # 🧹 Formatter (treefmt-nix)
-        inherit formatter;
+        formatter = treefmt-nix.lib.mkWrapper pkgs { };
       });
 }
